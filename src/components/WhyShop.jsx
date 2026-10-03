@@ -2,7 +2,7 @@ export default function WhyShop(){
   return (
     <div className="mt-[48px]">
       <div>
-        <h2 className="font-bold text-[26px] text-center">Why Shop on FarmFresh</h2>
+        <h2 className="font-bold text-[26px] text-center">Why Shop on FARMLIVE Connect</h2>
         <div className="text-center text-[#757575]">Experience the difference of food grown with care and delivered with passion</div>
       </div>
       <div className="flex flex-col md:flex-row gap-8 justify-center items-start mt-[24px] bg-[#2E7D32]/10 p-6 md:p-12 rounded-xl">

@@ -1,7 +1,9 @@
 import { Outlet, NavLink } from "react-router-dom";
 import ProfileSideNav from "../../components/ProfileSideNav";
+import { useUser } from "../../contexts/userContext";
 
 export default function ProfileLayout() {
+  const { user } = useUser();
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row gap-8">
@@ -36,6 +38,18 @@ export default function ProfileLayout() {
           >
             Order History
           </NavLink>
+          {user?.role === "admin" && <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                isActive
+                  ? "border-green-500 text-green-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`
+            }
+          >
+            Dashboard
+          </NavLink>}
         </nav>
 
         {/* Main Content */}

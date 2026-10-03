@@ -45,7 +45,7 @@ export default function CategoriesSlide(){
             key={index} 
             title={cat.name} 
             image={cat.img || cat.image} 
-            borderColor={index % 2 === 0 ? "#4CAF50" : "#EAB308"} 
+            borderColor="#EAB308" 
             onClick={() => handleCategoryClick(cat.name)}
           />
         ))
@@ -58,12 +58,22 @@ export default function CategoriesSlide(){
 export function CategoryCard({title = "Meat", image = "/categories/Fruits.png", borderColor="#4CAF50", onClick}){
   return (
     <div 
-      style={{ borderColor: borderColor }} 
+      style={{ borderColor }} 
       className="border-2 relative flex-shrink-0 grid place-items-center rounded-[24px] bg-white w-[160px] h-[180px] md:w-[233px] md:h-[245px] transition-transform hover:scale-105 cursor-pointer"
       onClick={onClick}
     >
-      <img src={image} className="h-[60%] md:h-[70%] object-contain" alt={title} />
-      <span style={{ backgroundColor: borderColor }} className="px-[12px] py-[3.5px] text-white absolute top-3 left-3 rounded-[6px] text-xs md:text-sm font-bold shadow-sm">{title}</span>
+      <div className="absolute inset-x-3 top-10 bottom-3 grid place-items-center overflow-hidden">
+        <img src={image} className="max-h-full max-w-full object-contain" alt={title} />
+      </div>
+      <span
+        style={{
+          backgroundColor: "#14532D",
+          color: "#FDE047",
+        }}
+        className="px-[12px] py-[3.5px] absolute top-3 left-3 rounded-[6px] text-xs md:text-sm font-extrabold shadow-sm"
+      >
+        {title}
+      </span>
     </div>
   )
 }

@@ -1,85 +1,94 @@
-import { Button } from "@heroui/react"
-import { Link, useNavigate } from "react-router-dom"
+import { Alert, Button, Input } from "@heroui/react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../../contexts/userContext";
-import { useState, useEffect } from "react";
-import toast from "react-hot-toast";
 
 export default function VerifyPage() {
-  const { sendVerificationEmail, logout } = useUser();
-  const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const location = useLocation();
   const navigate = useNavigate();
+  const { verifySignupOtp, resendSignupOtp } = useUser();
+  const [email] = useState(() => {
+    return location.state?.email || localStorage.getItem("farmlive_pending_signup_email") || "";
+  });
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [countdown, setCountdown] = useState(60);
 
   useEffect(() => {
-    let timer;
-    if (countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
+    if (countdown <= 0) return undefined;
+    const timer = window.setTimeout(() => setCountdown((remaining) => remaining - 1), 1000);
+    return () => window.clearTimeout(timer);
   }, [countdown]);
 
-  const handleResend = async () => {
-    if (countdown > 0) return;
+  async function handleVerify(event) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    setIsVerifying(true);
+    try {
+      await verifySignupOtp(email, code);
+      navigate("/", { replace: true });
+    } catch (verifyError) {
+      setError(verifyError.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  }
+
+  async function handleResend() {
+    setError("");
+    setMessage("");
     setIsResending(true);
     try {
-      await sendVerificationEmail();
-      toast.success("Verification email resent!");
-      setCountdown(60); // Set 60 seconds countdown
-    } catch (error) {
-      toast.error(error.message || "Failed to resend email");
+      const result = await resendSignupOtp(email);
+      setMessage(result.message);
+      setCountdown(60);
+    } catch (resendError) {
+      setError(resendError.message);
     } finally {
       setIsResending(false);
     }
-  };
+  }
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/auth/login");
-  };
-  
-  return (
-    <div className="bg-[#FAFAFA] p-[24px] w-full md:w-[70%] lg:w-[65%] rounded-[20px] flex flex-col gap-[16px]">
-      <h1 className="font-bold text-[24px] text-center">Email Verification</h1>
-      <p className="text-sm text-center text-[#757575]">
-        We've sent a verification link to your email. Please follow the instructions to verify your account.
-      </p>
-      
-      <div className="flex flex-col gap-3 mt-4">
-        <Button 
-          color="success" 
-          className="text-white font-bold"
-          onPress={handleResend}
-          isLoading={isResending}
-          isDisabled={countdown > 0}
-        >
-          {countdown > 0 ? `Resend in ${countdown}s` : "Resend Verification Email"}
-        </Button>
-
-        <Button 
-          variant="flat" 
-          color="default"
-          onPress={handleLogout}
-        >
-          Use a different account
-        </Button>
-
-        <Link className="w-full" to="/auth/login">
-          <Button 
-            variant="light" 
-            className="w-full" 
-            color="success"
-            startContent={
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
-              </svg>
-            }
-          >
-            Back to Login
-          </Button>
-        </Link>
+  if (!email) {
+    return (
+      <div className="bg-[#FAFAFA] p-6 w-full md:w-[70%] lg:w-[65%] rounded-[20px] flex flex-col gap-4 border border-gray-100">
+        <h1 className="font-bold text-2xl text-center">Signup verification</h1>
+        <p className="text-center text-gray-600">Start signup to receive a verification code.</p>
+        <Link className="text-center text-green-700 font-semibold" to="/auth/signup">Return to signup</Link>
       </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#FAFAFA] p-6 w-full md:w-[70%] lg:w-[65%] rounded-[20px] flex flex-col gap-4 border border-gray-100">
+      <h1 className="font-bold text-2xl text-center">Check your email</h1>
+      <p className="text-center text-gray-600">Enter the six-digit code sent to <strong>{email}</strong>. The code expires in 10 minutes.</p>
+      {error && <Alert color="danger" title={error} />}
+      {message && <Alert color="success" title={message} />}
+      <form onSubmit={handleVerify} className="flex flex-col gap-4">
+        <Input
+          label="Verification code"
+          placeholder="000000"
+          value={code}
+          onValueChange={(value) => setCode(value.replace(/\D/g, "").slice(0, 6))}
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          isRequired
+        />
+        <Button color="success" className="text-white font-bold" type="submit" isLoading={isVerifying} isDisabled={code.length !== 6}>
+          Verify and continue
+        </Button>
+      </form>
+      <Button variant="flat" onPress={handleResend} isLoading={isResending} isDisabled={countdown > 0 || isVerifying}>
+        {countdown > 0 ? `Send a new code in ${countdown}s` : "Resend verification code"}
+      </Button>
+      <Link className="text-center text-green-700 font-semibold" to="/auth/login">Back to login</Link>
     </div>
-  )
+  );
 }

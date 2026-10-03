@@ -19,7 +19,7 @@ export default function VerifySuccess() {
       </div>
       <div>
         <h1 className="font-bold text-[28px] md:text-[32px] text-gray-800 leading-tight">Verification Successful!</h1>
-        <p className="text-gray-500 mt-4 leading-relaxed">Your account has been verified successfully. You can now access all features of FarmFresh.</p>
+        <p className="text-gray-500 mt-4 leading-relaxed">Your account has been verified successfully. You can now access all features of FARMLIVE Connect.</p>
       </div>
       <div className="w-full mt-4">
         <Link className="w-full" to="/auth/login">

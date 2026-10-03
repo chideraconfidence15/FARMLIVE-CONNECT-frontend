@@ -1,10 +1,7 @@
 import { Card, CardBody, Chip, Spinner, Accordion, AccordionItem, Divider, Alert } from "@heroui/react";
 import { useUser } from "../contexts/userContext";
 import { useEffect, useState } from "react";
-import { databases, Query } from "../lib/appwrite";
-
-const DATABASE_ID = '69b5a810001139b4e286';
-const COLLECTION_ID = 'orders';
+import { getUserOrders } from "../controllers/orderController";
 
 export default function OrderHistoryPage() {
   const { user } = useUser();
@@ -21,15 +18,8 @@ export default function OrderHistoryPage() {
     }
 
     if (user) {
-      databases.listDocuments(
-        DATABASE_ID,
-        COLLECTION_ID,
-        [
-          Query.equal('userId', user.$id),
-          Query.orderDesc('$createdAt')
-        ]
-      ).then(response => {
-        setOrders(response.documents);
+      getUserOrders(user.$id || user.id).then(userOrders => {
+        setOrders(userOrders);
         setIsLoading(false);
       }).catch(err => {
         console.error("Error fetching orders:", err);

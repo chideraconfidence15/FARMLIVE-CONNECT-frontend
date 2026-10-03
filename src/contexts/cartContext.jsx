@@ -12,12 +12,12 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('farm_fresh_cart');
+    const savedCart = localStorage.getItem('farmlive_connect_cart') || localStorage.getItem('farm_fresh_cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
   useEffect(() => {
-    localStorage.setItem('farm_fresh_cart', JSON.stringify(cart));
+    localStorage.setItem('farmlive_connect_cart', JSON.stringify(cart));
   }, [cart]);
 
   const addToCart = (product, quantity = 1) => {

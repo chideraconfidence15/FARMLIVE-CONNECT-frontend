@@ -1,91 +1,81 @@
-import { databases, storage, ID, Query } from "../lib/appwrite";
-
-const DATABASE_ID = '69b5a810001139b4e286';
-const BUCKET_ID = 'productImage';
+import { api, uploadFileHelper } from "../lib/api";
 
 // Image Upload Helper
 export const uploadImage = async (file) => {
+  if (!file) return null;
   try {
-    const response = await storage.createFile(BUCKET_ID, ID.unique(), file);
-    return response.$id;
+    const dataUrl = await uploadFileHelper(file);
+    return dataUrl;
   } catch (error) {
     console.error("Error uploading image:", error);
-    throw error;
+    return null;
   }
 };
 
-// Delete Image Helper
 export const deleteImage = async (imageId) => {
-  if (!imageId) return;
-  try {
-    await storage.deleteFile(BUCKET_ID, imageId);
-  } catch (error) {
-    console.error("Error deleting image:", error);
-  }
+  // Local/Data URI images don't require server cleanup
+  return true;
 };
 
 // --- FARMS ---
 export const createFarm = async (data, file) => {
-  let imageId = null;
+  let img = data.img;
   if (file) {
-    imageId = await uploadImage(file);
+    img = await uploadImage(file);
   }
-  return await databases.createDocument(DATABASE_ID, 'farms', ID.unique(), {
+  return await api.post('/farms', {
     ...data,
-    imageId
+    img: img || data.img,
+    imageId: img ? "uploaded" : (data.imageId || "placeholder")
   });
 };
 
 export const updateFarm = async (documentId, data, file) => {
-  let imageId = data.imageId;
+  let img = data.img;
   if (file) {
-    // If there's a new file, upload it and optionally delete the old one
-    if (imageId) await deleteImage(imageId);
-    imageId = await uploadImage(file);
+    img = await uploadImage(file);
   }
-  return await databases.updateDocument(DATABASE_ID, 'farms', documentId, {
+  return await api.put(`/farms/${documentId}`, {
     ...data,
-    imageId
+    img: img || data.img
   });
 };
 
 export const deleteFarm = async (documentId, imageId) => {
-  if (imageId) await deleteImage(imageId);
-  return await databases.deleteDocument(DATABASE_ID, 'farms', documentId);
+  return await api.delete(`/farms/${documentId}`);
 };
 
 // --- PRODUCE (PRODUCTS) ---
 export const createProduct = async (data, file) => {
-  let imageId = null;
+  let img = data.img;
   if (file) {
-    imageId = await uploadImage(file);
+    img = await uploadImage(file);
   }
-  return await databases.createDocument(DATABASE_ID, 'products', ID.unique(), {
+  return await api.post('/products', {
     ...data,
-    imageId
+    img: img || data.img,
+    imageId: img ? "uploaded" : (data.imageId || "placeholder")
   });
 };
 
 export const updateProduct = async (documentId, data, file) => {
-  let imageId = data.imageId;
+  let img = data.img;
   if (file) {
-    if (imageId) await deleteImage(imageId);
-    imageId = await uploadImage(file);
+    img = await uploadImage(file);
   }
-  return await databases.updateDocument(DATABASE_ID, 'products', documentId, {
+  return await api.put(`/products/${documentId}`, {
     ...data,
-    imageId
+    img: img || data.img
   });
 };
 
 export const deleteProduct = async (documentId, imageId) => {
-  if (imageId) await deleteImage(imageId);
-  return await databases.deleteDocument(DATABASE_ID, 'products', documentId);
+  return await api.delete(`/products/${documentId}`);
 };
 
 export const updateProductStock = async (productId, newStock) => {
   try {
-    return await databases.updateDocument(DATABASE_ID, 'products', productId, {
+    return await api.patch(`/products/${productId}/stock`, {
       stockQuantity: newStock
     });
   } catch (error) {
@@ -96,29 +86,79 @@ export const updateProductStock = async (productId, newStock) => {
 
 // --- CATEGORIES ---
 export const createCategory = async (data, file) => {
-  let imageId = null;
+  let img = data.img;
   if (file) {
-    imageId = await uploadImage(file);
+    img = await uploadImage(file);
   }
-  return await databases.createDocument(DATABASE_ID, 'categories', ID.unique(), {
+  return await api.post('/categories', {
     ...data,
-    imageId
+    img: img || data.img,
+    imageId: img ? "uploaded" : (data.imageId || "placeholder")
   });
 };
 
 export const updateCategory = async (documentId, data, file) => {
-  let imageId = data.imageId;
+  let img = data.img;
   if (file) {
-    if (imageId) await deleteImage(imageId);
-    imageId = await uploadImage(file);
+    img = await uploadImage(file);
   }
-  return await databases.updateDocument(DATABASE_ID, 'categories', documentId, {
+  return await api.put(`/categories/${documentId}`, {
     ...data,
-    imageId
+    img: img || data.img
   });
 };
 
 export const deleteCategory = async (documentId, imageId) => {
-  if (imageId) await deleteImage(imageId);
-  return await databases.deleteDocument(DATABASE_ID, 'categories', documentId);
+  return await api.delete(`/categories/${documentId}`);
 };
+
+// --- ORDERS ---
+export const fetchAllOrders = async (params = {}) => {
+  try {
+    const orders = await api.get('/orders', params);
+    return Array.isArray(orders) ? orders : [];
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return [];
+  }
+};
+
+export const createAdminOrder = async (orderData) => {
+  return await api.post('/orders', orderData);
+};
+
+export const updateOrder = async (orderId, orderData) => {
+  return await api.put(`/orders/${orderId}`, orderData);
+};
+
+export const updateOrderStatus = async (orderId, status, eta) => {
+  return await api.patch(`/orders/${orderId}`, { status, eta });
+};
+
+export const deleteOrder = async (orderId) => {
+  return await api.delete(`/orders/${orderId}`);
+};
+
+// --- USERS ---
+export const fetchAllUsers = async () => {
+  try {
+    const users = await api.get('/users');
+    return Array.isArray(users) ? users : [];
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
+};
+
+export const createAdminUser = async (userData) => {
+  return await api.post('/auth/register', userData);
+};
+
+export const updateUser = async (userId, userData) => {
+  return await api.put(`/users/${userId}`, userData);
+};
+
+export const deleteUser = async (userId) => {
+  return await api.delete(`/users/${userId}`);
+};
+

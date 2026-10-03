@@ -17,6 +17,7 @@ import ProfilePage from "./pages/ProfilePage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import ProfileLayout from "./pages/layouts/ProfileLayout";
 import DashboardPage from "./pages/DashboardPage";
+import AdminOnly from "./components/AdminOnly";
 import { fetchFarm, fetchFarmProducts, fetchProduct } from "./controllers/productController";
 
 export const routes= createBrowserRouter([
@@ -45,7 +46,11 @@ export const routes= createBrowserRouter([
           },
           {
             path: "dashboard",
-            Component: DashboardPage
+            element: <AdminOnly><DashboardPage /></AdminOnly>
+          },
+          {
+            path: "admin",
+            element: <AdminOnly><DashboardPage /></AdminOnly>
           },
         ]
       },

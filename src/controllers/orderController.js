@@ -1,8 +1,4 @@
-import { databases, ID } from "../lib/appwrite";
-import { updateProductStock } from "./adminController";
-
-const DATABASE_ID = '69b5a810001139b4e286';
-const COLLECTION_ID = 'orders';
+import { api } from "../lib/api";
 
 export const saveOrder = async (user, totalAmount, paymentReference, items, status = "paid") => {
   if (!user) {
@@ -11,47 +7,39 @@ export const saveOrder = async (user, totalAmount, paymentReference, items, stat
   }
 
   try {
+    const formattedItems = items.map((item) => ({
+      productId: item.$id || item.id || item.productId,
+      productName: item.productName || item.name || "Produce Item",
+      price: item.price,
+      quantity: item.quantity || 1
+    }));
+
     const orderData = {
-      userId: user.$id,
-      userName: user.name || "Unknown User",
-      userEmail: user.email || "No Email",
-      totalAmount: parseFloat(totalAmount),
+      userId: user.$id || user.id,
+      userName: user.name || `${user.firstname || ''} ${user.lastname || ''}`.trim() || "Customer",
+      userEmail: user.email || "",
+      totalAmount: parseFloat(totalAmount) || 0,
       status: status,
-      paymentReference: String(paymentReference || "N/A"),
-      items: items.map(item => JSON.stringify({
-        productId: item.$id || item.productId,
-        productName: item.productName || "Product",
-        price: item.price,
-        quantity: item.quantity || 1
-      }))
+      paymentReference: String(paymentReference || `REF-${Date.now()}`),
+      items: formattedItems
     };
 
-    console.log("Saving order with data:", orderData);
-
-    const response = await databases.createDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      ID.unique(),
-      orderData
-    );
-    
-    // Update product stock if order is paid
-    if (status === "paid") {
-      for (const item of items) {
-        const productId = item.$id || item.productId;
-        const currentStock = item.stockQuantity || 0;
-        const quantityOrdered = item.quantity || 1;
-        const newStock = Math.max(0, currentStock - quantityOrdered);
-        await updateProductStock(productId, newStock);
-      }
-    }
-
+    console.log("Saving order to REST API:", orderData);
+    const response = await api.post('/orders', orderData);
     console.log("Order saved successfully:", response);
     return response;
   } catch (error) {
     console.error("Detailed error in saveOrder:", error);
-    // Log the specific Appwrite error message if available
-    if (error.message) console.error("Appwrite error message:", error.message);
     throw error;
+  }
+};
+
+export const getUserOrders = async (userId) => {
+  try {
+    const orders = await api.get('/orders', { userId });
+    return Array.isArray(orders) ? orders : [];
+  } catch (error) {
+    console.error(`Error fetching orders for user ${userId}:`, error);
+    return [];
   }
 };

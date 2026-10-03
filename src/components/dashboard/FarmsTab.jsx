@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableHeader,
@@ -9,16 +9,23 @@ import {
   Button,
   useDisclosure,
   Image,
-  Tooltip
+  Tooltip,
+  Input,
+  Chip
 } from "@heroui/react";
 import { fetchAllFarms } from "../../controllers/productController";
 import { deleteFarm } from "../../controllers/adminController";
 import FarmModal from "./FarmModal";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { Search, ExternalLink, Pencil, Trash2, Plus, Star } from "lucide-react";
 
-export default function FarmsTab() {
+export default function FarmsTab({ isCreateOpen, onOpenChangeCreate, onOpenNewFarm }) {
   const [farms, setFarms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedFarm, setSelectedFarm] = useState(null);
 
@@ -44,9 +51,10 @@ export default function FarmsTab() {
   };
 
   const handleDelete = async (farm) => {
+    const id = farm.$id || farm.id;
     if (window.confirm(`Are you sure you want to delete ${farm.farmName}?`)) {
       try {
-        await deleteFarm(farm.$id, farm.imageId);
+        await deleteFarm(id, farm.imageId);
         toast.success("Farm deleted successfully");
         loadFarms();
       } catch (error) {
@@ -57,68 +65,167 @@ export default function FarmsTab() {
 
   const handleCreate = () => {
     setSelectedFarm(null);
-    onOpen();
+    if (onOpenNewFarm) {
+      onOpenNewFarm();
+    } else {
+      onOpen();
+    }
+  };
+
+  const filteredFarms = useMemo(() => {
+    return farms.filter((f) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        (f.farmName && f.farmName.toLowerCase().includes(q)) ||
+        (f.location && f.location.toLowerCase().includes(q)) ||
+        (f.phoneNumber && f.phoneNumber.includes(q)) ||
+        (f.farmDescription && f.farmDescription.toLowerCase().includes(q));
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (f.status && f.status.toLowerCase() === statusFilter.toLowerCase());
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [farms, searchQuery, statusFilter]);
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "open":
+        return "success";
+      case "closed":
+        return "danger";
+      case "underconstruction":
+      case "comingsoon":
+        return "warning";
+      default:
+        return "default";
+    }
   };
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Manage Farms</h2>
-        <Button color="success" onPress={handleCreate}>Add New Farm</Button>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Manage Farms & Breeders</h2>
+          <p className="text-xs text-gray-500">Register pastoral ranches, verify breeders, and manage contact locations.</p>
+        </div>
+        <Button className="bg-[#14532D] font-semibold text-yellow-300 hover:bg-[#166534]" startContent={<Plus size={16} aria-hidden="true" />} onPress={handleCreate}>
+          Register New Farm
+        </Button>
       </div>
 
-      <Table aria-label="Farms table">
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200">
+        <div className="w-full sm:w-72">
+          <Input
+            size="sm"
+            placeholder="Search farm name, state, phone..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            isClearable
+            startContent={<Search size={16} className="text-gray-400" aria-hidden="true" />}
+          />
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+          <span className="text-xs font-semibold text-gray-500 flex-shrink-0">Status:</span>
+          {["all", "open", "closed", "comingSoon"].map((st) => (
+            <Button
+              key={st}
+              size="sm"
+              className={`bg-[#14532D] text-xs capitalize text-yellow-300 hover:bg-[#166534] ${statusFilter === st ? "font-bold ring-2 ring-yellow-300" : ""}`}
+              onPress={() => setStatusFilter(st)}
+            >
+              {st}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      <Table aria-label="Farms management table" className="min-w-full">
         <TableHeader>
-          <TableColumn>IMAGE</TableColumn>
-          <TableColumn>NAME</TableColumn>
+          <TableColumn>FARM & RANCH</TableColumn>
           <TableColumn>LOCATION</TableColumn>
+          <TableColumn>PHONE</TableColumn>
           <TableColumn>RATING</TableColumn>
           <TableColumn>STATUS</TableColumn>
           <TableColumn>ACTIONS</TableColumn>
         </TableHeader>
-        <TableBody isLoading={isLoading} emptyContent={"No farms found"}>
-          {farms.map((farm) => (
-            <TableRow key={farm.$id}>
-              <TableCell>
-                <Image
-                  src={farm.img}
-                  alt={farm.farmName}
-                  className="w-12 h-12 object-cover rounded-lg"
-                  fallbackSrc="https://via.placeholder.com/150"
-                />
-              </TableCell>
-              <TableCell>{farm.farmName}</TableCell>
-              <TableCell>{farm.location}</TableCell>
-              <TableCell>{Number(farm.rating || 0).toFixed(1)}</TableCell>
-              <TableCell>{farm.status}</TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Tooltip content="Edit farm">
-                    <Button isIconOnly size="sm" variant="light" onPress={() => handleEdit(farm)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                      </svg>
-                    </Button>
-                  </Tooltip>
-                  <Tooltip color="danger" content="Delete farm">
-                    <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleDelete(farm)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                      </svg>
-                    </Button>
-                  </Tooltip>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+        <TableBody isLoading={isLoading} emptyContent={"No farms found matching your search."}>
+          {filteredFarms.map((farm) => {
+            const id = farm.$id || farm.id;
+
+            return (
+              <TableRow key={id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={farm.img}
+                      alt={farm.farmName}
+                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0 border border-gray-200"
+                      fallbackSrc="https://via.placeholder.com/150"
+                    />
+                    <div>
+                      <p className="font-semibold text-xs text-gray-900">{farm.farmName}</p>
+                      <p className="text-[11px] text-gray-400 font-mono">ID: {id}</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-gray-700">{farm.location || "Nigeria"}</span>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-gray-600 font-mono">{farm.phoneNumber || "N/A"}</span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1 text-xs font-bold text-amber-600">
+                    <Star size={14} fill="currentColor" aria-hidden="true" />
+                    <span>{Number(farm.rating || 4.8).toFixed(1)}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Chip size="sm" color={getStatusColor(farm.status)} variant="flat" className="capitalize text-xs font-semibold">
+                    {farm.status || "open"}
+                  </Chip>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1 items-center">
+                    <Tooltip content="View Farm Page">
+                      <Link
+                        to={`/farms/${id}`}
+                        className="p-1.5 text-gray-500 hover:text-green-600 rounded-lg hover:bg-gray-100 transition-colors"
+                        title="View Public Farm Page"
+                      >
+                        <ExternalLink size={16} aria-hidden="true" />
+                      </Link>
+                    </Tooltip>
+                    <Tooltip content="Edit Farm">
+                      <Button isIconOnly size="sm" variant="light" onPress={() => handleEdit(farm)}>
+                        <Pencil size={16} className="text-blue-600" aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip color="danger" content="Delete Farm">
+                      <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleDelete(farm)}>
+                        <Trash2 size={16} className="text-red-500" aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
-      <FarmModal 
-        isOpen={isOpen} 
-        onOpenChange={onOpenChange} 
-        farm={selectedFarm} 
-        onSuccess={loadFarms} 
+      <FarmModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        farm={selectedFarm}
+        onSuccess={loadFarms}
       />
     </div>
   );

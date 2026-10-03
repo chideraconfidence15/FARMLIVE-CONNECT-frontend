@@ -51,7 +51,7 @@ export function CartCard({data, isLoading}) {
     return (
       <div className="gap-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {[...Array(4)].map((_, index) => (
-          <Card key={index} className={index % 2 == 0 ? "bg-[#EAF7EE]" : "bg-[#FBF4E7]"} shadow="sm">
+          <Card key={index} className="border border-yellow-500 bg-white" shadow="sm">
             <CardBody className="overflow-visible p-2">
               <Skeleton className="rounded-lg">
                 <div className="h-[192px] rounded-lg bg-default-300"></div>
@@ -83,7 +83,7 @@ export function CartCard({data, isLoading}) {
     <div className="gap-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
       {data?.map((item, index) => (
         /* eslint-disable no-console */
-        <Card key={index} className={index % 2 == 0 ? "bg-[#EAF7EE]" : "bg-[#FBF4E7]"} isPressable shadow="sm" onPress={() => navigate(`/product/${item.$id}`)}>
+        <Card key={index} className="border border-yellow-500 bg-white" isPressable shadow="sm" onPress={() => navigate(`/product/${item.$id}`)}>
           <CardBody className="overflow-visible p-2">
             <Image
               alt={item.productName}
@@ -106,8 +106,7 @@ export function CartCard({data, isLoading}) {
             </div>
             <div className="w-full mt-[4px]">
               <Button 
-                className="w-full text-white" 
-                color="success"
+                className="w-full bg-[#14532D] font-extrabold text-yellow-300 hover:bg-[#166534]"
                 onClick={(e) => {
                   e.stopPropagation();
                   addToCart(item);

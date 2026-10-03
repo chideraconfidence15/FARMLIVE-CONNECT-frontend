@@ -45,7 +45,9 @@ export default function CategoryModal({ isOpen, onOpenChange, category, onSucces
     setIsLoading(true);
     try {
       if (category) {
-        await updateCategory(category.$id, formData, file);
+        const categoryId = category.$id || category.id;
+        if (!categoryId) throw new Error("Category ID is missing; reload the categories list and try again.");
+        await updateCategory(categoryId, formData, file);
         toast.success("Category updated successfully");
       } else {
         await createCategory(formData, file);
@@ -87,7 +89,7 @@ export default function CategoryModal({ isOpen, onOpenChange, category, onSucces
               <Button variant="light" onPress={onClose}>
                 Cancel
               </Button>
-              <Button color="success" onPress={() => handleSubmit(onClose)} isLoading={isLoading}>
+              <Button className="bg-[#14532D] text-yellow-300 hover:bg-[#166534]" onPress={() => handleSubmit(onClose)} isLoading={isLoading}>
                 {category ? "Update" : "Create"}
               </Button>
             </ModalFooter>

@@ -76,7 +76,9 @@ export default function FarmModal({ isOpen, onOpenChange, farm, onSuccess }) {
         rating: parseFloat(formData.rating)
       };
       if (farm) {
-        await updateFarm(farm.$id, dataToSubmit, file);
+        const farmId = farm.$id || farm.id;
+        if (!farmId) throw new Error("Farm ID is missing; reload the farms list and try again.");
+        await updateFarm(farmId, dataToSubmit, file);
         toast.success("Farm updated successfully");
       } else {
         await createFarm(dataToSubmit, file);
@@ -178,7 +180,7 @@ export default function FarmModal({ isOpen, onOpenChange, farm, onSuccess }) {
               <Button variant="light" onPress={onClose}>
                 Cancel
               </Button>
-              <Button color="success" onPress={() => handleSubmit(onClose)} isLoading={isLoading}>
+              <Button className="bg-[#14532D] text-yellow-300 hover:bg-[#166534]" onPress={() => handleSubmit(onClose)} isLoading={isLoading}>
                 {farm ? "Update" : "Create"}
               </Button>
             </ModalFooter>

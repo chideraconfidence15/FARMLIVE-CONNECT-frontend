@@ -7,6 +7,7 @@ import {
   ModalFooter,
   Button,
   Input,
+  Textarea,
   Select,
   SelectItem,
   useDisclosure
@@ -20,10 +21,17 @@ import toast from "react-hot-toast";
 export default function ProductModal({ isOpen, onOpenChange, product, onSuccess }) {
   const [formData, setFormData] = useState({
     productName: "",
+    species: "",
+    breed: "",
+    origin: "local",
+    group: "livestock",
     price: "",
     farms: "",
     categories: [],
-    stockQuantity: 0
+    stockQuantity: 10,
+    description: "",
+    tags: "",
+    img: ""
   });
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,20 +62,34 @@ export default function ProductModal({ isOpen, onOpenChange, product, onSuccess 
   useEffect(() => {
     if (product) {
       setFormData({
-        productName: product.productName || "",
+        productName: product.productName || product.name || "",
+        species: product.species || "",
+        breed: product.breed || "",
+        origin: product.origin || "local",
+        group: product.group || "livestock",
         price: product.price || "",
-        farms: product.farms?.$id || "",
-        categories: product.categories?.map(c => c.$id) || [],
-        stockQuantity: product.stockQuantity || 0,
+        farms: product.farms?.$id || product.farms?.id || "",
+        categories: product.categories?.map((c) => c.$id || c.id || c.name) || [],
+        stockQuantity: product.stockQuantity !== undefined ? product.stockQuantity : 10,
+        description: product.description || "",
+        tags: Array.isArray(product.tags) ? product.tags.join(", ") : (product.tags || ""),
+        img: product.img || "",
         imageId: product.imageId
       });
     } else {
       setFormData({
         productName: "",
+        species: "",
+        breed: "",
+        origin: "local",
+        group: "livestock",
         price: "",
         farms: "",
         categories: [],
-        stockQuantity: 0
+        stockQuantity: 10,
+        description: "",
+        tags: "Vaccinated, Farm Raised, Purebred",
+        img: ""
       });
     }
     setFile(null);
@@ -83,24 +105,31 @@ export default function ProductModal({ isOpen, onOpenChange, product, onSuccess 
   };
 
   const handleSubmit = async (onClose) => {
-    if (!formData.farms) {
-      toast.error("Please select a farm");
+    if (!formData.productName || !formData.price) {
+      toast.error("Product name and price are required");
       return;
     }
+
     setIsLoading(true);
     try {
+      const parsedTags = formData.tags
+        ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+
       const dataToSubmit = {
         ...formData,
-        price: parseFloat(formData.price),
-        stockQuantity: parseInt(formData.stockQuantity)
+        name: formData.productName,
+        price: parseFloat(formData.price) || 0,
+        stockQuantity: parseInt(formData.stockQuantity) || 0,
+        tags: parsedTags
       };
-      
+
       if (product) {
-        await updateProduct(product.$id, dataToSubmit, file);
-        toast.success("Product updated successfully");
+        await updateProduct(product.$id || product.id, dataToSubmit, file);
+        toast.success("Livestock/Produce updated successfully");
       } else {
         await createProduct(dataToSubmit, file);
-        toast.success("Product created successfully");
+        toast.success("Livestock/Produce created successfully");
       }
       onSuccess();
       onClose();
@@ -117,85 +146,180 @@ export default function ProductModal({ isOpen, onOpenChange, product, onSuccess 
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader>{product ? "Edit Produce" : "Create New Produce"}</ModalHeader>
+              <ModalHeader className="flex flex-col gap-1">
+                <span className="text-xl font-bold">
+                  {product ? "Edit Livestock / Produce" : "Add New Livestock or Farm Produce"}
+                </span>
+                <span className="text-xs text-gray-500 font-normal">
+                  Configure breed details, stock, pricing, and farm association.
+                </span>
+              </ModalHeader>
               <ModalBody>
                 <div className="flex flex-col gap-4">
-                  <Input
-                    label="Product Name"
-                    name="productName"
-                    value={formData.productName}
-                    onChange={handleChange}
-                    isRequired
-                  />
-                  <Input
-                    label="Price"
-                    name="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={handleChange}
-                    isRequired
-                    startContent={<div className="text-default-400 text-small">$</div>}
-                  />
-                  
+                  {/* Name and Group */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <Input
+                        label="Product / Animal Title"
+                        name="productName"
+                        value={formData.productName}
+                        onChange={handleChange}
+                        isRequired
+                        placeholder="e.g. West African Dwarf Doe (Purebred)"
+                      />
+                    </div>
+                    <Select
+                      label="Group"
+                      name="group"
+                      selectedKeys={[formData.group]}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, group: e.target.value }))}
+                    >
+                      <SelectItem key="livestock" value="livestock">Livestock</SelectItem>
+                      <SelectItem key="poultry" value="poultry">Poultry</SelectItem>
+                      <SelectItem key="fish" value="fish">Fishery</SelectItem>
+                      <SelectItem key="produce" value="produce">Fresh Produce</SelectItem>
+                      <SelectItem key="pets" value="pets">Guard & Pets</SelectItem>
+                    </Select>
+                  </div>
+
+                  {/* Species and Breed */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <Input
+                      label="Species (Latin or Common)"
+                      name="species"
+                      value={formData.species}
+                      onChange={handleChange}
+                      placeholder="e.g. Goat (Capra hircus)"
+                    />
+                    <Input
+                      label="Breed / Variety"
+                      name="breed"
+                      value={formData.breed}
+                      onChange={handleChange}
+                      placeholder="e.g. Red Sokoto / Boer"
+                    />
+                    <Select
+                      label="Origin"
+                      name="origin"
+                      selectedKeys={[formData.origin]}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, origin: e.target.value }))}
+                    >
+                      <SelectItem key="local" value="local">Local Breed</SelectItem>
+                      <SelectItem key="foreign" value="foreign">Foreign / Exotic</SelectItem>
+                      <SelectItem key="cross" value="cross">Crossbreed (Hybrid)</SelectItem>
+                    </Select>
+                  </div>
+
+                  {/* Price & Stock */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label="Price (₦)"
+                      name="price"
+                      type="number"
+                      value={formData.price}
+                      onChange={handleChange}
+                      isRequired
+                      startContent={<div className="text-gray-400 text-xs">₦</div>}
+                      placeholder="e.g. 95000"
+                    />
+                    <Input
+                      label="Stock Quantity Available"
+                      name="stockQuantity"
+                      type="number"
+                      min={0}
+                      value={formData.stockQuantity}
+                      onChange={handleChange}
+                      isRequired
+                      placeholder="e.g. 20"
+                    />
+                  </div>
+
+                  {/* Farm Association */}
                   <div className="flex gap-2 items-end">
                     <Select
-                      label="Farm"
+                      label="Partner Farm / Ranch"
                       name="farms"
                       selectedKeys={formData.farms ? [formData.farms] : []}
-                      onChange={(e) => setFormData(prev => ({...prev, farms: e.target.value}))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, farms: e.target.value }))}
                       className="flex-1"
-                      isRequired
+                      placeholder="Select responsible farm..."
                     >
                       {farmsList.map((farm) => (
-                        <SelectItem key={farm.$id} value={farm.$id}>
-                          {farm.farmName}
+                        <SelectItem key={farm.$id || farm.id} value={farm.$id || farm.id}>
+                          {farm.farmName} ({farm.location || "Nigeria"})
                         </SelectItem>
                       ))}
                     </Select>
-                    <Button color="success" variant="flat" onPress={farmDisclosure.onOpen}>+</Button>
+                    <Button className="bg-[#14532D] text-yellow-300 hover:bg-[#166534]" onPress={farmDisclosure.onOpen} title="Register New Farm">
+                      + Farm
+                    </Button>
                   </div>
 
+                  {/* Categories */}
                   <div className="flex gap-2 items-end">
                     <Select
-                      label="Categories"
+                      label="Categories (Multi-Select)"
                       name="categories"
                       selectionMode="multiple"
                       selectedKeys={new Set(formData.categories)}
-                      onSelectionChange={(keys) => setFormData(prev => ({...prev, categories: Array.from(keys)}))}
+                      onSelectionChange={(keys) => setFormData((prev) => ({ ...prev, categories: Array.from(keys) }))}
                       className="flex-1"
+                      placeholder="Assign categories..."
                     >
                       {categoriesList.map((cat) => (
-                        <SelectItem key={cat.$id} value={cat.$id}>
+                        <SelectItem key={cat.$id || cat.id || cat.name} value={cat.$id || cat.id || cat.name}>
                           {cat.name}
                         </SelectItem>
                       ))}
                     </Select>
-                    <Button color="success" variant="flat" onPress={categoryDisclosure.onOpen}>+</Button>
+                    <Button className="bg-[#14532D] text-yellow-300 hover:bg-[#166534]" onPress={categoryDisclosure.onOpen} title="Add New Category">
+                      + Cat
+                    </Button>
                   </div>
 
-                  <Input
-                    label="Stock Quantity"
-                    name="stockQuantity"
-                    type="number"
-                    value={formData.stockQuantity}
+                  {/* Description */}
+                  <Textarea
+                    label="Description & Health Status"
+                    name="description"
+                    value={formData.description}
                     onChange={handleChange}
-                    isRequired
+                    placeholder="Provide details on vaccination, weight, age, temperament, breeding readiness..."
+                    minRows={2}
                   />
 
+                  {/* Tags */}
                   <Input
-                    type="file"
-                    label="Product Image"
-                    onChange={handleFileChange}
-                    accept="image/*"
+                    label="Search Tags (comma separated)"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleChange}
+                    placeholder="e.g. Vaccinated, High Fertility, Dairy Potential, Trypanotolerant"
                   />
+
+                  {/* Image input or file upload */}
+                  <div className="flex flex-col gap-2">
+                    <Input
+                      label="Image Web URL (Optional)"
+                      name="img"
+                      value={formData.img}
+                      onChange={handleChange}
+                      placeholder="https://images.unsplash.com/..."
+                    />
+                    <Input
+                      type="file"
+                      label="Or Upload Image File from Computer"
+                      onChange={handleFileChange}
+                      accept="image/*"
+                    />
+                  </div>
                 </div>
               </ModalBody>
               <ModalFooter>
                 <Button variant="light" onPress={onClose}>
                   Cancel
                 </Button>
-                <Button color="success" onPress={() => handleSubmit(onClose)} isLoading={isLoading}>
-                  {product ? "Update" : "Create"}
+                <Button className="bg-[#14532D] font-semibold text-yellow-300 hover:bg-[#166534]" onPress={() => handleSubmit(onClose)} isLoading={isLoading}>
+                  {product ? "Update Listing" : "Save Listing"}
                 </Button>
               </ModalFooter>
             </>
@@ -204,16 +328,16 @@ export default function ProductModal({ isOpen, onOpenChange, product, onSuccess 
       </Modal>
 
       {/* Quick Add Farm Modal */}
-      <FarmModal 
-        isOpen={farmDisclosure.isOpen} 
-        onOpenChange={farmDisclosure.onOpenChange} 
+      <FarmModal
+        isOpen={farmDisclosure.isOpen}
+        onOpenChange={farmDisclosure.onOpenChange}
         onSuccess={loadDependencies}
       />
 
       {/* Quick Add Category Modal */}
-      <CategoryModal 
-        isOpen={categoryDisclosure.isOpen} 
-        onOpenChange={categoryDisclosure.onOpenChange} 
+      <CategoryModal
+        isOpen={categoryDisclosure.isOpen}
+        onOpenChange={categoryDisclosure.onOpenChange}
         onSuccess={loadDependencies}
       />
     </>

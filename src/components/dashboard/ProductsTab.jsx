@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableHeader,
@@ -9,24 +9,36 @@ import {
   Button,
   useDisclosure,
   Image,
-  Tooltip
+  Tooltip,
+  Input,
+  Chip
 } from "@heroui/react";
-import { fetchAllProducts } from "../../controllers/productController";
-import { deleteProduct } from "../../controllers/adminController";
+import { fetchAllProducts, fetchCategories } from "../../controllers/productController";
+import { deleteProduct, updateProductStock } from "../../controllers/adminController";
 import ProductModal from "./ProductModal";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { Search, ExternalLink, Pencil, Trash2, TriangleAlert, Plus, Minus } from "lucide-react";
 
-export default function ProductsTab() {
+export default function ProductsTab({ isCreateOpen, onOpenChangeCreate, onOpenNewProduct }) {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchAllProducts();
-      setProducts(data);
+      const [prods, cats] = await Promise.all([
+        fetchAllProducts(),
+        fetchCategories()
+      ]);
+      setProducts(prods);
+      setCategories(cats);
     } catch (error) {
       toast.error("Failed to load products");
     } finally {
@@ -35,7 +47,7 @@ export default function ProductsTab() {
   };
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
   const handleEdit = (product) => {
@@ -43,80 +55,238 @@ export default function ProductsTab() {
     onOpen();
   };
 
+  const handleCreate = () => {
+    setSelectedProduct(null);
+    if (onOpenNewProduct) {
+      onOpenNewProduct();
+    } else {
+      onOpen();
+    }
+  };
+
   const handleDelete = async (product) => {
-    if (window.confirm(`Are you sure you want to delete ${product.productName}?`)) {
+    const id = product.$id || product.id;
+    if (window.confirm(`Are you sure you want to delete "${product.productName || product.name}"?`)) {
       try {
-        await deleteProduct(product.$id, product.imageId);
+        await deleteProduct(id, product.imageId);
         toast.success("Product deleted successfully");
-        loadProducts();
+        loadData();
       } catch (error) {
         toast.error("Failed to delete product");
       }
     }
   };
 
-  const handleCreate = () => {
-    setSelectedProduct(null);
-    onOpen();
+  // Inline Quick Stock Increment / Decrement
+  const handleStockAdjust = async (product, delta) => {
+    const id = product.$id || product.id;
+    const currentStock = product.stockQuantity !== undefined ? product.stockQuantity : 10;
+    const newStock = Math.max(0, currentStock + delta);
+
+    try {
+      await updateProductStock(id, newStock);
+      setProducts((prev) =>
+        prev.map((p) => ((p.$id || p.id) === id ? { ...p, stockQuantity: newStock } : p))
+      );
+      toast.success(`Stock updated: ${newStock} units`);
+    } catch (err) {
+      toast.error("Failed to adjust stock");
+    }
   };
+
+  // Filter products by search and category
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        (p.productName && p.productName.toLowerCase().includes(q)) ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.breed && p.breed.toLowerCase().includes(q)) ||
+        (p.species && p.species.toLowerCase().includes(q)) ||
+        (p.farms?.farmName && p.farms.farmName.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q));
+
+      const matchesCat =
+        selectedCategory === "all" ||
+        p.categories?.some((c) => (c.name || c).toLowerCase() === selectedCategory.toLowerCase()) ||
+        (p.category && p.category.toLowerCase() === selectedCategory.toLowerCase());
+
+      return matchesSearch && matchesCat;
+    });
+  }, [products, searchQuery, selectedCategory]);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Manage Produce</h2>
-        <Button color="success" onPress={handleCreate}>Add New Produce</Button>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Manage Livestock & Farm Produce</h2>
+          <p className="text-xs text-gray-500">Track cattle, sheep, goats, poultry, fishery, and harvested farm crops.</p>
+        </div>
+        <Button className="bg-[#14532D] font-semibold text-yellow-300 hover:bg-[#166534]" startContent={<Plus size={16} aria-hidden="true" />} onPress={handleCreate}>
+          Add New Listing
+        </Button>
       </div>
 
-      <Table aria-label="Products table">
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200">
+        <div className="w-full sm:w-72">
+          <Input
+            size="sm"
+            placeholder="Search name, breed, species, farm..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            isClearable
+            startContent={<Search size={16} className="text-gray-400" aria-hidden="true" />}
+          />
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+          <span className="text-xs font-semibold text-gray-500 flex-shrink-0">Category:</span>
+          <Button
+            size="sm"
+            className={`bg-[#14532D] text-xs text-yellow-300 hover:bg-[#166534] ${selectedCategory === "all" ? "font-bold ring-2 ring-yellow-300" : ""}`}
+            onPress={() => setSelectedCategory("all")}
+          >
+            All ({products.length})
+          </Button>
+          {categories.slice(0, 5).map((cat) => (
+            <Button
+              key={cat.$id || cat.id || cat.name}
+              size="sm"
+              className={`bg-[#14532D] text-xs text-yellow-300 hover:bg-[#166534] ${selectedCategory === cat.name ? "font-bold ring-2 ring-yellow-300" : ""}`}
+              onPress={() => setSelectedCategory(cat.name)}
+            >
+              {cat.name}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      <Table aria-label="Livestock and produce table" className="min-w-full">
         <TableHeader>
-          <TableColumn>IMAGE</TableColumn>
-          <TableColumn>NAME</TableColumn>
+          <TableColumn>ITEM</TableColumn>
+          <TableColumn>BREED / SPECIES</TableColumn>
           <TableColumn>PRICE</TableColumn>
-          <TableColumn>FARM</TableColumn>
+          <TableColumn>STOCK (QUICK EDIT)</TableColumn>
+          <TableColumn>FARM PARTNER</TableColumn>
           <TableColumn>ACTIONS</TableColumn>
         </TableHeader>
-        <TableBody isLoading={isLoading} emptyContent={"No products found"}>
-          {products.map((product) => (
-            <TableRow key={product.$id}>
-              <TableCell>
-                <Image
-                  src={product.img}
-                  alt={product.productName}
-                  className="w-12 h-12 object-cover rounded-lg"
-                  fallbackSrc="https://via.placeholder.com/150"
-                />
-              </TableCell>
-              <TableCell>{product.productName}</TableCell>
-              <TableCell>${product.price}</TableCell>
-              <TableCell>{product.farms?.farmName || "N/A"}</TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Tooltip content="Edit product">
-                    <Button isIconOnly size="sm" variant="light" onPress={() => handleEdit(product)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                      </svg>
-                    </Button>
-                  </Tooltip>
-                  <Tooltip color="danger" content="Delete product">
-                    <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleDelete(product)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                      </svg>
-                    </Button>
-                  </Tooltip>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+        <TableBody isLoading={isLoading} emptyContent={"No livestock or produce found matching your search."}>
+          {filteredProducts.map((product) => {
+            const id = product.$id || product.id;
+            const stock = product.stockQuantity !== undefined ? product.stockQuantity : 10;
+            const isLowStock = stock <= 5;
+
+            return (
+              <TableRow key={id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src={product.img}
+                      alt={product.productName}
+                      className="w-12 h-12 object-cover rounded-lg flex-shrink-0 border border-gray-200"
+                      fallbackSrc="https://via.placeholder.com/150"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-xs text-gray-900 truncate max-w-[200px]" title={product.productName}>
+                        {product.productName || product.name}
+                      </p>
+                      <div className="flex gap-1 items-center mt-0.5">
+                        {product.group && (
+                          <span className="text-[10px] uppercase font-bold text-gray-400">
+                            {product.group}
+                          </span>
+                        )}
+                        {product.origin && (
+                          <span className="text-[10px] bg-gray-100 text-gray-600 px-1 rounded">
+                            {product.origin}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div>
+                    <p className="text-xs font-medium text-gray-800">{product.breed || "Standard"}</p>
+                    <p className="text-[11px] text-gray-400">{product.species || product.category || ""}</p>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="font-bold text-xs text-green-700">
+                    ₦{Number(product.price).toLocaleString()}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Chip
+                      size="sm"
+                      color={isLowStock ? "danger" : "success"}
+                      variant="flat"
+                      className="text-xs font-bold"
+                    >
+                      {stock} units {isLowStock && <TriangleAlert size={14} className="inline text-amber-600" aria-label="Low stock" />}
+                    </Chip>
+                    <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                      <button
+                        onClick={() => handleStockAdjust(product, -1)}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-white text-gray-700 text-xs font-bold"
+                        title="Reduce Stock"
+                      >
+                        <Minus size={12} aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={() => handleStockAdjust(product, 5)}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-white text-gray-700 text-xs font-bold"
+                        title="Add 5 Units"
+                      >
+                        <Plus size={12} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-gray-600 truncate max-w-[120px] block">
+                    {product.farms?.farmName || "Direct Breeder"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1 items-center">
+                    <Tooltip content="View Live Listing">
+                      <Link
+                        to={`/product/${id}`}
+                        className="p-1.5 text-gray-500 hover:text-green-600 rounded-lg hover:bg-gray-100 transition-colors"
+                        title="View Public Page"
+                      >
+                        <ExternalLink size={16} aria-hidden="true" />
+                      </Link>
+                    </Tooltip>
+                    <Tooltip content="Edit Listing">
+                      <Button isIconOnly size="sm" variant="light" onPress={() => handleEdit(product)}>
+                        <Pencil size={16} className="text-blue-600" aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip color="danger" content="Delete Listing">
+                      <Button isIconOnly size="sm" variant="light" color="danger" onPress={() => handleDelete(product)}>
+                        <Trash2 size={16} className="text-red-500" aria-hidden="true" />
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
-      <ProductModal 
-        isOpen={isOpen} 
-        onOpenChange={onOpenChange} 
-        product={selectedProduct} 
-        onSuccess={loadProducts} 
+      <ProductModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        product={selectedProduct}
+        onSuccess={loadData}
       />
     </div>
   );
