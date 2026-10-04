@@ -3,7 +3,11 @@
  * Replaces Appwrite cloud with local Express REST backend
  */
 
-const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+const configuredApiBase = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = (import.meta.env.PROD
+  ? configuredApiBase.replace(/^http:\/\//i, 'https://')
+  : configuredApiBase
+).replace(/\/$/, '');
 
 async function request(endpoint, options = {}) {
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
