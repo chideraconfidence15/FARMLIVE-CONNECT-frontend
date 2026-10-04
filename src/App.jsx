@@ -45,9 +45,6 @@ function App() {
       <div className='relative bg-[url("/hero.jpg")] bg-cover bg-center h-[420px] md:h-[500px] rounded-2xl overflow-hidden flex flex-col items-center md:items-start justify-center text-white px-6 md:px-0 shadow-lg'>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
         <div className='relative z-10 md:ml-[93px] text-center md:text-left max-w-xl'>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-yellow-300 font-semibold text-xs md:text-sm mb-3 border border-white/20">
-            <span>Verified Livestock & Pastoral Farmland</span>
-          </div>
           {/* Heading */}
           <h2 className='font-extrabold text-[32px] md:text-[54px] leading-tight max-w-[340px] md:max-w-[500px] mx-auto md:mx-0 drop-shadow-sm'>
             Healthy Livestock & Breeds From Trusted Farmlands

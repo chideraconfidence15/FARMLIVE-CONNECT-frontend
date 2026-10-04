@@ -157,7 +157,6 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      {/* Category Pills */}
       <div className="flex gap-2 mt-6 overflow-x-auto pb-2 no-scrollbar">
         {isLoading ? (
           [...Array(6)].map((_, index) => (
@@ -190,7 +189,6 @@ export default function CategoriesPage() {
         )}
       </div>
 
-      {/* Results View */}
       <div className="mt-4">
         {filteredProducts.length === 0 && !isLoading ? (
           <div className="text-center py-16 px-4 bg-gray-50 rounded-2xl border border-dashed border-gray-300 my-8">

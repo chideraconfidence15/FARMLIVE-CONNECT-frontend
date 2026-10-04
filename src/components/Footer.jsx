@@ -70,7 +70,7 @@ export default function Footer(){
               isRequired
               aria-label="Email address for FARMLIVE updates"
             />
-            <Button className="text-white font-bold w-full" color="success" shadow type="submit" isLoading={isSubmitting}>
+            <Button className="w-full bg-[#14532D] font-bold text-yellow-300 hover:bg-[#166534]" shadow type="submit" isLoading={isSubmitting}>
               Subscribe
             </Button>
             {feedback && (

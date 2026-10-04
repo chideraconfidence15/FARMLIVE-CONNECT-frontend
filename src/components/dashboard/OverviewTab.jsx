@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardBody, Button, Chip, Skeleton } from "@heroui/react";
-import { DollarSign, Package, Tractor, UsersRound, Zap, Plus, TriangleAlert, ArrowRight } from "lucide-react";
+import { DollarSign, Package, Tractor, UsersRound, TriangleAlert, ArrowRight } from "lucide-react";
 import { fetchAllProducts, fetchAllFarms, fetchCategories } from "../../controllers/productController";
 import { fetchAllOrders, fetchAllUsers, updateOrderStatus } from "../../controllers/adminController";
 import toast from "react-hot-toast";
 
-export default function OverviewTab({ setActiveTab, onOpenProductModal, onOpenFarmModal, onOpenCategoryModal, onOpenOrderModal }) {
+export default function OverviewTab({ setActiveTab }) {
   const [stats, setStats] = useState({
     products: [],
     farms: [],
@@ -174,46 +174,6 @@ export default function OverviewTab({ setActiveTab, onOpenProductModal, onOpenFa
           </CardBody>
         </Card>
       </div>
-
-      {/* Quick Action CRUD Launcher */}
-      <Card className="border border-gray-200 shadow-sm bg-white">
-        <CardBody className="p-5">
-          <h3 className="font-bold text-base text-gray-800 mb-3 flex items-center gap-2">
-            <Zap size={18} aria-hidden="true" />
-            <span>Quick CRUD Operations</span>
-          </h3>
-          <div className="flex flex-wrap gap-2.5">
-            <Button
-              className="bg-[#14532D] font-semibold text-yellow-300 hover:bg-[#166534]"
-              startContent={<Plus size={16} aria-hidden="true" />}
-              onPress={onOpenProductModal}
-            >
-              Add Livestock / Produce
-            </Button>
-            <Button
-              className="bg-[#14532D] font-semibold text-yellow-300 hover:bg-[#166534]"
-              startContent={<Plus size={16} aria-hidden="true" />}
-              onPress={onOpenFarmModal}
-            >
-              Add Farm / Breeder
-            </Button>
-            <Button
-              className="bg-[#14532D] font-semibold text-yellow-300 hover:bg-[#166534]"
-              startContent={<Plus size={16} aria-hidden="true" />}
-              onPress={onOpenCategoryModal}
-            >
-              Add Category
-            </Button>
-            <Button
-              className="bg-[#14532D] font-semibold text-yellow-300 hover:bg-[#166534]"
-              startContent={<Plus size={16} aria-hidden="true" />}
-              onPress={onOpenOrderModal}
-            >
-              Record New Order
-            </Button>
-          </div>
-        </CardBody>
-      </Card>
 
       {/* Low Stock Inventory Warning */}
       {stats.lowStockItems.length > 0 && (
