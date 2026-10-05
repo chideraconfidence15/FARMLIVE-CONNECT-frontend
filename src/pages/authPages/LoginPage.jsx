@@ -87,10 +87,9 @@ export default function LoginPage() {
           Remember Me
         </Checkbox>
         <Button 
-          color="success"
           type="submit"
           isLoading={isLoading}
-          className="text-white font-bold"
+          className="!bg-[#14532D] !font-bold !text-[#EAB308] hover:!bg-[#166534]"
         >
           Login
         </Button>
