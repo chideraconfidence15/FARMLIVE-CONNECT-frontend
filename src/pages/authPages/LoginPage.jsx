@@ -83,6 +83,7 @@ export default function LoginPage() {
           type="password" 
           isRequired
         />
+        <Link className="-mt-2 self-end text-sm font-semibold text-green-700" to="/auth/forgot-password">Forgot password?</Link>
         <Checkbox defaultSelected size="md">
           Remember Me
         </Checkbox>

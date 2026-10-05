@@ -93,6 +93,7 @@ export default function SignupPage() {
           )}
         />
         <Input name="confirmPassword" label="Confirm password" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm your password" type="password" isRequired />
+        <Link className="-mt-2 self-end text-sm font-semibold text-green-700" to="/auth/forgot-password">Forgot your password?</Link>
         <Checkbox isSelected={formData.agreeToTerms} onValueChange={(checked) => setFormData((current) => ({ ...current, agreeToTerms: checked }))}>
           I agree to the <a className="text-green-600">Terms of Service</a> and <a className="text-green-600" href="#">Privacy Policy</a>
         </Checkbox>

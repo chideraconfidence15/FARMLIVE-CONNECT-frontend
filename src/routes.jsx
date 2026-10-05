@@ -6,6 +6,7 @@ import AuthLayout from "./pages/layouts/AuthLayout";
 import DefaultLayout from "./pages/layouts/DefaultLayout";
 import VerifyPage from "./pages/authPages/VerifyPage";
 import VerifySuccess from "./pages/authPages/VerifySuccess";
+import ForgotPasswordPage from "./pages/authPages/ForgotPasswordPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import OrdersPage from "./pages/OrdersPages";
 
@@ -105,6 +106,10 @@ export const routes= createBrowserRouter([
       {
         path: "login",
         Component: LoginPage,
+      },
+      {
+        path: "forgot-password",
+        Component: ForgotPasswordPage,
       },
       {
         path: "signup",
