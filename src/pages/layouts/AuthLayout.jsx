@@ -5,7 +5,7 @@ import Footer from "../../components/Footer";
 export default function TwoColumns({children}) {
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen">
-      <div className="relative hidden md:flex md:w-1/2 items-center justify-center overflow-hidden bg-[url('/livestock-hero.jpg')] bg-cover bg-center px-10 text-center text-white">
+      <div className="relative hidden md:flex md:w-1/2 items-center justify-center overflow-hidden bg-[url('/auth-cattle.jpg')] bg-cover bg-center px-10 text-center text-white">
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 max-w-xl">
           <p className="text-4xl font-extrabold md:text-5xl">FARMLIVE <span className="text-lime-300">Connect</span></p>
