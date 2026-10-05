@@ -85,8 +85,8 @@ export default function OverviewTab({ setActiveTab }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-2xl" />
           ))}
@@ -97,20 +97,20 @@ export default function OverviewTab({ setActiveTab }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       {/* Metric KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {/* Total Revenue */}
-        <Card className="border border-green-100 shadow-sm bg-gradient-to-br from-green-500/10 via-white to-white">
+        <Card className="min-w-0 border border-green-100 shadow-sm bg-gradient-to-br from-green-500/10 via-white to-white">
           <CardBody className="p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Gross Platform Revenue</span>
-              <span className="p-2 rounded-xl bg-green-500 text-white shadow-sm">
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <span className="min-w-0 break-words text-xs font-bold text-gray-500 uppercase">Gross Platform Revenue</span>
+              <span className="shrink-0 p-2 rounded-xl bg-green-500 text-white shadow-sm">
                 <DollarSign className="w-5 h-5" aria-hidden="true" />
               </span>
             </div>
             <div className="mt-3">
-              <h3 className="text-2xl font-black text-gray-900">
+              <h3 className="break-words text-xl font-black text-gray-900 sm:text-2xl">
                 ₦{stats.totalRevenue.toLocaleString()}
               </h3>
               <p className="text-xs text-green-700 font-medium mt-0.5">
@@ -121,16 +121,16 @@ export default function OverviewTab({ setActiveTab }) {
         </Card>
 
         {/* Total Livestock & Produce */}
-        <Card className="border border-blue-100 shadow-sm bg-gradient-to-br from-blue-500/10 via-white to-white">
+        <Card className="min-w-0 border border-blue-100 shadow-sm bg-gradient-to-br from-blue-500/10 via-white to-white">
           <CardBody className="p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Livestock & Produce</span>
-              <span className="p-2 rounded-xl bg-blue-500 text-white shadow-sm">
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <span className="min-w-0 break-words text-xs font-bold text-gray-500 uppercase">Livestock & Produce</span>
+              <span className="shrink-0 p-2 rounded-xl bg-blue-500 text-white shadow-sm">
                 <Package className="w-5 h-5" aria-hidden="true" />
               </span>
             </div>
             <div className="mt-3">
-              <h3 className="text-2xl font-black text-gray-900">{stats.products.length} Items</h3>
+              <h3 className="break-words text-xl font-black text-gray-900 sm:text-2xl">{stats.products.length} Items</h3>
               <p className="text-xs text-blue-600 font-medium mt-0.5">
                 Across {stats.categories.length} distinct categories
               </p>
@@ -139,16 +139,16 @@ export default function OverviewTab({ setActiveTab }) {
         </Card>
 
         {/* Active Farms */}
-        <Card className="border border-amber-100 shadow-sm bg-gradient-to-br from-amber-500/10 via-white to-white">
+        <Card className="min-w-0 border border-amber-100 shadow-sm bg-gradient-to-br from-amber-500/10 via-white to-white">
           <CardBody className="p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Farms & Breeders</span>
-              <span className="p-2 rounded-xl bg-amber-500 text-white shadow-sm">
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <span className="min-w-0 break-words text-xs font-bold text-gray-500 uppercase">Farms & Breeders</span>
+              <span className="shrink-0 p-2 rounded-xl bg-amber-500 text-white shadow-sm">
                 <Tractor className="w-5 h-5" aria-hidden="true" />
               </span>
             </div>
             <div className="mt-3">
-              <h3 className="text-2xl font-black text-gray-900">{stats.farms.length} Partners</h3>
+              <h3 className="break-words text-xl font-black text-gray-900 sm:text-2xl">{stats.farms.length} Partners</h3>
               <p className="text-xs text-amber-700 font-medium mt-0.5">
                 Pastoral ranches and local suppliers
               </p>
@@ -157,16 +157,16 @@ export default function OverviewTab({ setActiveTab }) {
         </Card>
 
         {/* Registered Users */}
-        <Card className="border border-purple-100 shadow-sm bg-gradient-to-br from-purple-500/10 via-white to-white">
+        <Card className="min-w-0 border border-purple-100 shadow-sm bg-gradient-to-br from-purple-500/10 via-white to-white">
           <CardBody className="p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Users & Customers</span>
-              <span className="p-2 rounded-xl bg-purple-500 text-white shadow-sm">
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <span className="min-w-0 break-words text-xs font-bold text-gray-500 uppercase">Users & Customers</span>
+              <span className="shrink-0 p-2 rounded-xl bg-purple-500 text-white shadow-sm">
                 <UsersRound className="w-5 h-5" aria-hidden="true" />
               </span>
             </div>
             <div className="mt-3">
-              <h3 className="text-2xl font-black text-gray-900">{stats.users.length} Users</h3>
+              <h3 className="break-words text-xl font-black text-gray-900 sm:text-2xl">{stats.users.length} Users</h3>
               <p className="text-xs text-purple-700 font-medium mt-0.5">
                 Active buyers and verified sellers
               </p>
