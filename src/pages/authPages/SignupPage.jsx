@@ -97,7 +97,7 @@ export default function SignupPage() {
         <Checkbox isSelected={formData.agreeToTerms} onValueChange={(checked) => setFormData((current) => ({ ...current, agreeToTerms: checked }))}>
           I agree to the <a className="text-green-600">Terms of Service</a> and <a className="text-green-600" href="#">Privacy Policy</a>
         </Checkbox>
-        <Button isLoading={isSubmitting} type="submit" className="text-white w-full" color="success">Sign Up</Button>
+        <Button isLoading={isSubmitting} type="submit" className="!w-full !bg-[#14532D] !font-bold !text-[#EAB308] hover:!bg-[#166534]">Sign Up</Button>
         <div className="border-t border-gray-300 my-2"></div>
         <GoogleSignInButton onCredential={handleGoogleCredential} disabled={isGoogleLoading} onError={(googleError) => setError(googleError.message)} />
         <p className="text-center">Already have an account? <Link className="text-green-600" to="/auth/login">Login</Link></p>
