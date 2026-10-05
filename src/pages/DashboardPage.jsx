@@ -31,7 +31,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex w-full min-w-0 max-w-full flex-col gap-6 overflow-x-hidden pb-16">
+    <div className="flex flex-col gap-6 pb-16">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-5">
         <div>
