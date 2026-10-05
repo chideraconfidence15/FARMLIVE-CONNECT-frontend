@@ -86,7 +86,7 @@ export default function OverviewTab({ setActiveTab }) {
   if (isLoading) {
     return (
       <div className="flex min-w-0 flex-col gap-6">
-        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-28 rounded-2xl" />
           ))}
@@ -99,7 +99,7 @@ export default function OverviewTab({ setActiveTab }) {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       {/* Metric KPI Cards */}
-      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {/* Total Revenue */}
         <Card className="min-w-0 border border-green-100 shadow-sm bg-gradient-to-br from-green-500/10 via-white to-white">
           <CardBody className="p-4 flex flex-col justify-between">
