@@ -81,7 +81,7 @@ export default function VerifyPage() {
           maxLength={6}
           isRequired
         />
-        <Button color="success" className="text-white font-bold" type="submit" isLoading={isVerifying} isDisabled={code.length !== 6}>
+        <Button className="!bg-[#14532D] !font-bold !text-[#EAB308] hover:!bg-[#166534]" type="submit" isLoading={isVerifying} isDisabled={code.length !== 6}>
           Verify and continue
         </Button>
       </form>
